@@ -60,6 +60,7 @@ def compressFile(inputName: str, outputName: str, depth: int):
         # counter += 1
         #assert (abs(p0 + p1 - 1) < 1e-6)
         # model
+
         ctxTree.update(bit, reverse=False, temp=False)
         # arithmetic coding
         encodeBit(output, bit, p0)

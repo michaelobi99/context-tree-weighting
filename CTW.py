@@ -2,15 +2,13 @@ import math
 import numpy as np
 from collections import defaultdict
 
-# default = lambda: -1.0
-#
-# ktEstimate = defaultdict(default)
-#
-# def ktEstimator(count: List, bit: int):
-#     s = sum(count)
-#     if ktEstimate[s] == -1:
-#         ktEstimate[s] = math.log(count[bit] + 0.5) - math.log(s + 1.0)
-#     return ktEstimate[s]
+default = lambda: 2.0
+ktEstimate = defaultdict(default)
+def ktEstimator(count, bit: int):
+    s = sum(count)
+    if ktEstimate[s] == 2.0:
+        ktEstimate[s] = math.log(count[bit] + 0.5) - math.log(s + 1.0)
+    return ktEstimate[s]
 
 class Node():
     def __init__(self, parent = None):
@@ -42,9 +40,11 @@ class CTW():
             #update node
             if not reverse:
                 node.estimatedProb += math.log(node.count[bit] + 0.5) - math.log(sum(node.count) + 1.0)
+                #node.estimatedProb += ktEstimator(node.count, bit)
                 node.count[bit] += 1
             else:
                 node.count[bit] -= 1
+                #node.estimatedProb -= ktEstimator(node.count, bit)
                 node.estimatedProb -= math.log(node.count[bit] + 0.5) - math.log(sum(node.count) + 1.0)
 
         #node is leaf
