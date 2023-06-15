@@ -2,8 +2,8 @@ from BitIO import *
 import math
 from CTW import CTW
 
-high, low, underflow, code = 0xffff, 0, 0, 0
-shift = 15
+high, low, underflow, code = 0xffffffff, 0, 0, 0
+shift = 31
 
 def decodeBit(prob: float, input: bitFile):
     global high, low, underflow, code
@@ -14,12 +14,12 @@ def decodeBit(prob: float, input: bitFile):
     else:
         high = split
     while True:
-        if high & 0x8000 == low & 0x8000:
+        if high & 0x80000000 == low & 0x80000000:
             pass
-        elif (not (high & 0x4000)) and (low & 0x4000):
-            code ^= (1 << 14)
-            high ^= (1 << 14)
-            low ^= (1 << 14)
+        elif (not (high & 0x40000000)) and (low & 0x40000000):
+            code ^= (1 << 30)
+            high ^= (1 << 30)
+            low ^= (1 << 30)
         else:
             break
         low &= ((1 << shift) - 1)
@@ -31,15 +31,24 @@ def decodeBit(prob: float, input: bitFile):
         code <<= 1
         code |= inputBit(input)
 
-    return bit
+    return 1 if bit else 0
 
 
 def initializeDecoder(input: bitFile):
     global code
-    for i in range(16):
+    for i in range(32):
         code <<= 1
         code |= inputBit(input)
 
+def fillContext(context, input, output, depth):
+    for i in range(depth):
+        bit = inputBit(input)
+        if bit == 2:
+            break
+        context.append(bit)
+    for elem in context:
+        outputBit(output, elem)
+    return len(context)
 
 def expandFile(inputName: str, outputName: str, depth: int):
     input: bitFile = openInputBitFile(inputName)
@@ -58,17 +67,19 @@ def expandFile(inputName: str, outputName: str, depth: int):
     fileSize *= 8
     # ..............................................
     global high, low, underflow
+    context = []
+    counter = fillContext(context, input, output, depth)
     initializeDecoder(input)
-    ctxTree = CTW(depth)
-    counter = 1
-    while counter < fileSize:
-        p0 = math.exp(ctxTree.getLogPx(0))
-        #p1 = math.exp(ctxTree.getLogPx(1))
+    ctxTree = CTW(depth, context)
+    while counter <= fileSize:
+        p0 = math.exp(ctxTree.predict(0))
+        ctxTree.update(0, reverse=True, temp=True)
         #assert (abs(p0 + p1 - 1) < 1e-6)
 
         bit = decodeBit(p0, input)
         outputBit(output, bit)
         # model
+
         ctxTree.update(bit, reverse=False, temp=False)
         # arithmetic coding
         counter += 1

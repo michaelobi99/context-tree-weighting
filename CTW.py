@@ -2,13 +2,7 @@ import math
 import numpy as np
 from collections import defaultdict
 
-default = lambda: 2.0
-ktEstimate = defaultdict(default)
-def ktEstimator(count, bit: int):
-    s = sum(count)
-    if ktEstimate[s] == 2.0:
-        ktEstimate[s] = math.log(count[bit] + 0.5) - math.log(s + 1.0)
-    return ktEstimate[s]
+ktEstimate = defaultdict(lambda: 1.5)
 
 class Node():
     def __init__(self, parent = None):
@@ -19,16 +13,21 @@ class Node():
         self.estimatedProb = 0.0
         self.weightedProb = 0.0
 
+def ktEstimator(node: Node, bit: int):
+    s = sum(node.count)
+    if ktEstimate[s] == 1.5:
+        ktEstimate[s] = math.log(node.count[bit] + 0.5) - math.log(s + 1.0)
+    return ktEstimate[s]
+
 class CTW():
     def __init__(self, contextDepth: int = 3, contextBits = None):
         if contextBits == None:
             contextBits = [0] * contextDepth
         self.depth = contextDepth
         self.root = Node()
-        self.contextBits = contextBits
+        self.contextBits = [x for x in contextBits]
 
     def update(self, bit, reverse, temp):
-        logaddexp = lambda a, b: math.log(math.exp(a) + math.exp(b))
         node = self.root
         for i in range(self.depth, -1, -1):
             #go one step deeper
@@ -40,11 +39,11 @@ class CTW():
             #update node
             if not reverse:
                 node.estimatedProb += math.log(node.count[bit] + 0.5) - math.log(sum(node.count) + 1.0)
-                #node.estimatedProb += ktEstimator(node.count, bit)
+                #node.estimatedProb += ktEstimator(node, bit)
                 node.count[bit] += 1
             else:
                 node.count[bit] -= 1
-                #node.estimatedProb -= ktEstimator(node.count, bit)
+                #node.estimatedProb -= ktEstimator(node, bit)
                 node.estimatedProb -= math.log(node.count[bit] + 0.5) - math.log(sum(node.count) + 1.0)
 
         #node is leaf
@@ -63,11 +62,9 @@ class CTW():
             self.contextBits = self.contextBits[1:]
             self.contextBits.append(bit)
 
-    def getLogPx(self, bit):
+    def predict(self, bit):
         pw = self.root.weightedProb
         #dummy update
         self.update(bit, reverse= False, temp= True)
         pwx = self.root.weightedProb
-        #restore
-        self.update(bit, reverse=True, temp= True)
         return pwx - pw
