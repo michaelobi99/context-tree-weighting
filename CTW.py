@@ -67,11 +67,11 @@ class CTW():
             self.contextBits = self.contextBits[1:]
             self.contextBits.append(bit)
 
-    def getLogPx(self, bit):
+    def predict(self, bit):
         pw = self.root.weightedProb
         # dummy update
         self.update(bit, reverse=False, temp=True)
         pwx = self.root.weightedProb
         # restore
-        self.update(bit, reverse=True, temp=True)
+
         return pwx - pw

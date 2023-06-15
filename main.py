@@ -22,7 +22,7 @@ class Timer():
 def main():
     timer = Timer()
     depth = 48
-    filename = "textFile1.txt"
+    filename = "textFile.txt"
     filename2 = "textFile2.txt"
     filename3 = "textFile3.txt"
     print('compression started')

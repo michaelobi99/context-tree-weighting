@@ -39,6 +39,16 @@ def initializeDecoder(input: bitFile):
         code <<= 1
         code |= inputBit(input)
 
+def fillContext(context, input, output, depth, fileSize):
+    for i in range(depth):
+        bit = inputBit(input)
+        if i < fileSize:
+            outputBit(output, bit)
+            context.append(bit)
+        if bit == 2:
+            break
+
+
 def expandFile(inputName: str, outputName: str, depth: int):
     input: bitFile = openInputBitFile(inputName)
     output: bitFile = openOutputBitFile(outputName)
@@ -56,13 +66,17 @@ def expandFile(inputName: str, outputName: str, depth: int):
     fileSize *= 8
     # ..............................................
     global high, low, underflow
+    context = []
+    fillContext(context, input, output, depth, fileSize)
     initializeDecoder(input)
-    ctxTree = CTW(depth)
-    counter = 1
-    while counter <= fileSize:
-        p0 = math.exp(ctxTree.getLogPx(0))
-        p1 = math.exp(ctxTree.getLogPx(1))
-        assert (abs(p0 + p1 - 1) < 1e-6)
+    ctxTree = CTW(depth, context)
+    #ctxTree = CTW(depth)
+    counter = len(context)
+    while counter < fileSize:
+        p0 = math.exp(ctxTree.predict(0))
+        ctxTree.update(0, reverse=True, temp=True)
+        #p1 = math.exp(ctxTree.predict(1))
+        #assert (abs(p0 + p1 - 1) < 1e-6)
 
         bit = decodeBit(p0, input)
         outputBit(output, bit)
