@@ -83,4 +83,3 @@ def compressFile(inputName: str, outputName: str, depth: int):
         closeInputBitFile(input)
         closeOutputBitFile(output)
 
-#to do:  use context at start, chek codeblocks for code

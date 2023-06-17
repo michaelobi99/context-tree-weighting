@@ -72,6 +72,4 @@ class CTW():
         # dummy update
         self.update(bit, reverse=False, temp=True)
         pwx = self.root.weightedProb
-        # restore
-
         return pwx - pw
